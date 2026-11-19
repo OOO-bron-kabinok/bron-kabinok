@@ -9,7 +9,7 @@ dateInput.value = todayStr;
 dateInput.min = todayStr;
 
 function getRoomCurrentStatus(room) {
-    if (room.slots.status === 'busy') return 'busy';
+    if (room.slots.some(s => s.status === 'busy')) return 'busy';
     if (room.slots.some(s => s.status === 'booked')) return 'booked';
     return 'free';
 }
@@ -125,6 +125,7 @@ function submitBooking() {
         purpose: purposeText
     });
 
+    saveDatabase(); // Сохраняем изменения в локальную БД
     updateCounter();
     renderFloor();
     closeModal();
@@ -177,6 +178,7 @@ function cancelBooking(bookingId) {
     }
 
     userBookings.splice(index, 1);
+    saveDatabase(); // Сохраняем изменения в локальную БД
     updateCounter();
     renderBookings();
     renderFloor();
@@ -187,14 +189,12 @@ function updateCounter() {
     const counter = document.getElementById('bookings-counter');
     counter.textContent = userBookings.length;
     
-    // Скрываем значок, если активных броней 0
     if (userBookings.length > 0) {
         counter.classList.remove('hidden');
     } else {
         counter.classList.add('hidden');
     }
 }
-
 
 function switchView(viewName) {
     document.getElementById('nav-map').classList.toggle('active', viewName === 'map');
@@ -216,8 +216,9 @@ function showToast(title, message) {
 }
 
 function simulatePush() {
-    const msg = userBookings.length > 0
-        ? `${userBookings.roomName} ждет вас в ${userBookings.time.split('–').trim()}.`
+    const firstBooking = userBookings[0];
+    const msg = firstBooking
+        ? `${firstBooking.roomName} ждет вас в ${firstBooking.time.split('–')[0].trim()}.`
         : 'Кабинка 101 ждет вас в 16:00 (тестовое уведомление).';
     showToast('Напоминание: через 30 минут бронь', msg);
 }
