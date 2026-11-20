@@ -5,7 +5,6 @@ const defaultRoomsDatabase = {
         {
             id: '101',
             name: 'Кабинка 101',
-            type: 'Переговорная для мини-команды',
             capacity: 4,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -17,7 +16,6 @@ const defaultRoomsDatabase = {
         {
             id: '102',
             name: 'Кабинка 102',
-            type: 'Акустическая капсула для созвонов',
             capacity: 1,
             slots: [
                 { time: '10:00 – 12:00', status: 'busy', label: 'Занято (Онлайн-защита)' },
@@ -29,7 +27,6 @@ const defaultRoomsDatabase = {
         {
             id: '103',
             name: 'Кабинка 103',
-            type: 'Тихая зона для подготовки',
             capacity: 3,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -41,7 +38,6 @@ const defaultRoomsDatabase = {
         {
             id: '104',
             name: 'Кабинка 104',
-            type: 'Кабинка для парной работы',
             capacity: 2,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -55,7 +51,6 @@ const defaultRoomsDatabase = {
         {
             id: '201',
             name: 'Кабинка 201',
-            type: 'Индивидуальное место с монитором',
             capacity: 1,
             slots: [
                 { time: '10:00 – 12:00', status: 'busy', label: 'Занято (Сдача практики)' },
@@ -67,7 +62,6 @@ const defaultRoomsDatabase = {
         {
             id: '202',
             name: 'Кабинка 202',
-            type: 'Переговорная с маркерной доской',
             capacity: 4,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -81,7 +75,6 @@ const defaultRoomsDatabase = {
         {
             id: '301',
             name: 'Кабинка 301',
-            type: 'Кабинка для брейншторма',
             capacity: 4,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -93,7 +86,6 @@ const defaultRoomsDatabase = {
         {
             id: '302',
             name: 'Кабинка 302',
-            type: 'Зона фокусировки',
             capacity: 2,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
