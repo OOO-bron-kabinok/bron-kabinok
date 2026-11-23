@@ -5,6 +5,7 @@ const defaultRoomsDatabase = {
         {
             id: '101',
             name: 'Кабинка 101',
+            type: 'Переговорная для мини-команды',
             capacity: 4,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -16,6 +17,7 @@ const defaultRoomsDatabase = {
         {
             id: '102',
             name: 'Кабинка 102',
+            type: 'Акустическая капсула для созвонов',
             capacity: 1,
             slots: [
                 { time: '10:00 – 12:00', status: 'busy', label: 'Занято (Онлайн-защита)' },
@@ -27,17 +29,19 @@ const defaultRoomsDatabase = {
         {
             id: '103',
             name: 'Кабинка 103',
+            type: 'Тихая зона для подготовки',
             capacity: 3,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
                 { time: '12:00 – 14:00', status: 'free', label: 'Свободно' },
-                { time: '14:00 – 16:00', status: 'booked', label: 'Забронировано (Собрание студсовета)' },
+                { time: '14:00 – 16:00', status: 'free', label: 'Свободно' },
                 { time: '16:00 – 18:00', status: 'free', label: 'Свободно' }
             ]
         },
         {
             id: '104',
             name: 'Кабинка 104',
+            type: 'Кабинка для парной работы',
             capacity: 2,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -51,6 +55,7 @@ const defaultRoomsDatabase = {
         {
             id: '201',
             name: 'Кабинка 201',
+            type: 'Индивидуальное место с монитором',
             capacity: 1,
             slots: [
                 { time: '10:00 – 12:00', status: 'busy', label: 'Занято (Сдача практики)' },
@@ -62,6 +67,7 @@ const defaultRoomsDatabase = {
         {
             id: '202',
             name: 'Кабинка 202',
+            type: 'Переговорная с маркерной доской',
             capacity: 4,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -75,6 +81,7 @@ const defaultRoomsDatabase = {
         {
             id: '301',
             name: 'Кабинка 301',
+            type: 'Кабинка для брейншторма',
             capacity: 4,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -86,6 +93,7 @@ const defaultRoomsDatabase = {
         {
             id: '302',
             name: 'Кабинка 302',
+            type: 'Зона фокусировки',
             capacity: 2,
             slots: [
                 { time: '10:00 – 12:00', status: 'free', label: 'Свободно' },
@@ -97,17 +105,7 @@ const defaultRoomsDatabase = {
     ]
 };
 
-const defaultUserBookings = [
-    {
-        id: 1001,
-        roomId: '103',
-        roomName: 'Кабинка 103',
-        floor: 1,
-        date: todayStr,
-        time: '14:00 – 16:00',
-        purpose: 'Собрание студсовета и подготовка к УП.12'
-    }
-];
+const defaultUserBookings = [];
 
 let roomsDatabase = JSON.parse(localStorage.getItem('it_moscow_rooms')) || defaultRoomsDatabase;
 let userBookings = JSON.parse(localStorage.getItem('it_moscow_bookings')) || defaultUserBookings;
@@ -122,3 +120,9 @@ const statusBadgeText = {
     busy: 'Занята',
     booked: 'Забронирована'
 };
+
+let cabinReports = JSON.parse(localStorage.getItem('it_moscow_reports')) || [];
+
+function saveReports() {
+    localStorage.setItem('it_moscow_reports', JSON.stringify(cabinReports));
+}

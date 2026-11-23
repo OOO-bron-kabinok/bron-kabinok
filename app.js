@@ -98,6 +98,15 @@ function handleBackdropClick(event) {
 function submitBooking() {
     const purposeText = document.getElementById('purpose-input').value.trim();
     const errorEl = document.getElementById('modal-error');
+    const selectedDate = dateInput.value;
+
+    // Проверка: одна кабинка на один день
+    const existingBooking = userBookings.find(b => b.date === selectedDate);
+    if (existingBooking) {
+        errorEl.textContent = `На эту дату у вас уже забронирована ${existingBooking.roomName} (${existingBooking.time}). Можно только продлить текущую бронь.`;
+        errorEl.style.display = 'block';
+        return;
+    }
 
     if (chosenSlotIndex === null || !purposeText) {
         errorEl.textContent = 'Пожалуйста, выберите свободное окно и укажите цель встречи.';
@@ -120,17 +129,19 @@ function submitBooking() {
         roomId: activeRoom.id,
         roomName: activeRoom.name,
         floor: activeFloor,
-        date: dateInput.value,
+        date: selectedDate,
         time: targetSlot.time,
+        bookedSlots: [targetSlot.time],
         purpose: purposeText
     });
 
-    saveDatabase(); // Сохраняем изменения в локальную БД
+    saveDatabase();
     updateCounter();
     renderFloor();
     closeModal();
     showToast('Бронь подтверждена', `${activeRoom.name} на ${targetSlot.time}. Напоминание придет за 30 минут.`);
 }
+
 
 function renderBookings() {
     const listContainer = document.getElementById('bookings-list');
@@ -158,7 +169,13 @@ function renderBookings() {
                     ${booking.purpose}
                 </div>
             </div>
-            <button class="btn-danger-outline" onclick="cancelBooking(${booking.id})">Отменить бронь</button>
+            <div class="booking-actions">
+                <div class="booking-actions-row">
+                    <button class="btn-secondary" onclick="extendBooking(${booking.id})">+ Продлить</button>
+                    <button class="btn-secondary" onclick="openReportModal('${booking.roomName}')">⚠ Проблема</button>
+                </div>
+                <button class="btn-danger-outline" onclick="cancelBooking(${booking.id})">Отменить бронь</button>
+            </div>
         `;
         listContainer.appendChild(card);
     });
@@ -170,15 +187,23 @@ function cancelBooking(bookingId) {
 
     const removed = userBookings[index];
     const room = roomsDatabase[removed.floor]?.find(r => r.id === removed.roomId);
-    const slot = room?.slots.find(s => s.time === removed.time);
 
-    if (slot) {
-        slot.status = 'free';
-        slot.label = 'Свободно';
+    if (room) {
+        const [bookStart, bookEnd] = removed.time.split('–').map(t => t.trim());
+        const slotsToFree = removed.bookedSlots || [removed.time];
+
+        room.slots.forEach(slot => {
+            const [slotStart, slotEnd] = slot.time.split('–').map(t => t.trim());
+            // Освобождаем слот, если он в списке или попадает в интервал продлённой брони
+            if (slotsToFree.includes(slot.time) || (slotStart >= bookStart && slotEnd <= bookEnd)) {
+                slot.status = 'free';
+                slot.label = 'Свободно';
+            }
+        });
     }
 
     userBookings.splice(index, 1);
-    saveDatabase(); // Сохраняем изменения в локальную БД
+    saveDatabase();
     updateCounter();
     renderBookings();
     renderFloor();
@@ -231,3 +256,69 @@ function formatDate(isoDate) {
 // Запуск при загрузке
 updateCounter();
 renderFloor();
+
+let reportRoomName = '';
+
+function extendBooking(bookingId) {
+    const booking = userBookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    const room = roomsDatabase[booking.floor]?.find(r => r.id === booking.roomId);
+    if (!room) return;
+
+    // Берём конечное время текущей брони (например, "16:00" из "14:00 – 16:00")
+    const currentEndTime = booking.time.split('–')[1].trim();
+    const nextSlot = room.slots.find(s => s.time.startsWith(currentEndTime));
+
+    if (!nextSlot || nextSlot.status !== 'free') {
+        showToast('Нельзя продлить', 'Следующий слот уже занят или рабочий день окончен.');
+        return;
+    }
+
+    nextSlot.status = 'booked';
+    nextSlot.label = `Забронировано (${booking.purpose})`;
+
+    // Запоминаем все слоты этой брони, чтобы потом освободить каждый
+    if (!booking.bookedSlots) booking.bookedSlots = [booking.time];
+    booking.bookedSlots.push(nextSlot.time);
+
+    const startTime = booking.time.split('–')[0].trim();
+    const newEndTime = nextSlot.time.split('–')[1].trim();
+    booking.time = `${startTime} – ${newEndTime}`;
+
+    saveDatabase();
+    renderBookings();
+    renderFloor();
+    showToast('Бронь продлена', `${booking.roomName} теперь ваша до ${newEndTime}.`);
+}
+
+function openReportModal(roomName) {
+    reportRoomName = roomName;
+    document.getElementById('report-title').textContent = `Проблема: ${roomName}`;
+    document.getElementById('report-input').value = '';
+    document.getElementById('report-error').style.display = 'none';
+    document.getElementById('report-backdrop').classList.add('open');
+}
+
+function closeReportModal() {
+    document.getElementById('report-backdrop').classList.remove('open');
+}
+
+function submitReport() {
+    const text = document.getElementById('report-input').value.trim();
+    if (!text) {
+        document.getElementById('report-error').style.display = 'block';
+        return;
+    }
+
+    cabinReports.unshift({
+        id: Date.now(),
+        room: reportRoomName,
+        issue: text,
+        date: new Date().toLocaleString('ru-RU')
+    });
+
+    saveReports();
+    closeReportModal();
+    showToast('Заявка отправлена', `Администратор получил сообщение по ${reportRoomName}.`);
+}

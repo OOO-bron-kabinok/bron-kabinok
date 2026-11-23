@@ -91,6 +91,23 @@
     </div>
 </div>
 
+<div class="modal-backdrop" id="report-backdrop" onclick="if(event.target.id==='report-backdrop') closeReportModal()">
+    <div class="modal-window">
+        <div class="modal-header">
+            <div>
+                <h3 id="report-title">Сообщить о проблеме</h3>
+                <p>Заявка в хозслужбу колледжа</p>
+            </div>
+            <button class="modal-close" onclick="closeReportModal()">✕</button>
+        </div>
+        <label class="field-label">Что случилось в кабинке?</label>
+        <textarea id="report-input" class="text-input" rows="3" placeholder="Например: грязный стол, не работает розетка или маркер"></textarea>
+        <div class="error-msg" id="report-error">Опишите проблему перед отправкой.</div>
+        <button class="btn-primary" onclick="submitReport()">Отправить заявку</button>
+    </div>
+</div>
+
+
 <div class="toast" id="toast">
     <div class="toast-icon">🔔</div>
     <div>
