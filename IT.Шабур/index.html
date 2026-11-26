@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirect</title>
+  <script>
+    if (sessionStorage.getItem('currentUserId')) {
+      // simple check, real logic in pages
+      location.href = 'student.html';
+    } else {
+      location.href = 'login.html';
+    }
+  </script>
+</head>
+<body>
+  <p>Перенаправление...</p>
+</body>
+</html>

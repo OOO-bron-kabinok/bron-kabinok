@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT.ROOM — Личный кабинет</title>
+  <!-- Подключаем родные стили IT.Шабур для полного единства экосистемы -->
+  <link rel="stylesheet" href="IT.Шабур/styles.css">
+  <!-- Библиотека для генерации динамического QR-кода как в IT.Шабур -->
+  <script src="https://cloudflare.com"></script>
+  <style>
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .booking-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px; background: #0f0f1e; border: 1px solid var(--card-border);
+      border-radius: 14px; margin-top: 10px; gap: 12px; flex-wrap: wrap;
+    }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">IT.ROOM <span style="font-size:0.85rem; color:var(--text-muted); font-weight:400;">× IT.Шабур</span></div>
+      <nav class="nav">
+        <a href="index.html">Карта кабинетов</a>
+        <a href="profile.html" class="active">Личный кабинет</a>
+        <a href="IT.Шабур/student.html">Открыть IT.Шабур ↗</a>
+        <a href="#" onclick="logoutFromShabur()" style="color: var(--danger);">Выйти</a>
+      </nav>
+    </header>
+
+    <!-- Карточка студента из IT.Шабур -->
+    <div class="card">
+      <div class="profile-header">
+        <div class="avatar" id="avatar">?</div>
+        <div style="flex: 1;">
+          <h2 id="studentName">Загрузка профиля...</h2>
+          <p id="studentGroup" style="color: var(--text-muted);">Группа: —</p>
+          <p id="studentSpecialty" style="color: var(--text-muted); font-size: 0.9rem;">Специальность: —</p>
+          <span class="status-badge" id="studentStatus">Статус: Активен</span>
+          <div class="stacks" id="studentStacks"></div>
+        </div>
+        <div class="qr-box">
+          <div class="qr-container" id="qrcode" style="margin: 0; padding: 10px;"></div>
+          <div id="qrTimer" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Обновление через: 60 сек</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Единый кошелек: Шабурята -->
+      <div class="card">
+        <h3>Кошелёк экосистемы (Шабурята)</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 6px 0 12px;">
+          Единый баланс с IT.Шабур. Получайте шабурята за вовремя подтверждённые брони и порядок в аудитории!
+        </p>
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px;">
+          <span class="bonus-amount" id="bonusAmount">0</span>
+          <span style="color: var(--accent-green); font-weight: 600;">шабурят</span>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+          <button class="btn small success" onclick="checkInDemo()">✓ Check-in в кабинете (+10)</button>
+          <button class="btn small secondary" onclick="buyVipPass()">VIP-бронь на неделю (-50)</button>
+        </div>
+
+        <h4 style="font-size: 0.95rem; margin-bottom: 8px;">История операций:</h4>
+        <div id="history" style="max-height: 220px; overflow-y: auto;"></div>
+      </div>
+
+      <!-- Активные брони в IT.ROOM -->
+      <div class="card">
+        <h3>Мои брони аудиторий</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">
+          За 30 минут до начала придёт уведомление. Не забудьте отсканировать QR на входе.
+        </p>
+        <div id="myBookingsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="room-profile.js"></script>
+</body>
+</html>
