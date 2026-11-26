@@ -1,7 +1,7 @@
 const DB_KEY = 'studentAppDB';
-const ROOMS_DB_KEY = 'itRoomBookings'; // Отдельный ключ для броней кабинетов
+const IT_ROOM_BOOKINGS_KEY = 'it_moscow_bookings';
+const IT_ROOM_ROOMS_KEY = 'it_moscow_rooms';
 
-// Получаем общую базу из IT.Шабур
 function getShaburDB() {
   const raw = localStorage.getItem(DB_KEY);
   return raw ? JSON.parse(raw) : null;
@@ -11,7 +11,6 @@ function saveShaburDB(db) {
   localStorage.setItem(DB_KEY, JSON.stringify(db));
 }
 
-// Получаем текущего авторизованного студента
 function getCurrentStudent() {
   const userId = sessionStorage.getItem('currentUserId');
   const db = getShaburDB();
@@ -19,12 +18,13 @@ function getCurrentStudent() {
   return db.users.find(u => u.id === userId) || null;
 }
 
-// Динамический QR-код (логика 1-в-1 из IT.Шабур)
 let qrSeconds = 60;
 function generateRoomQR(user) {
-  const nonce = Math.random().toString(36).slice(2, 10);
-  const qrText = `ITROOM_CHECKIN:${user.id}:${Date.now()}:${nonce}:${user.group}`;
   const container = document.getElementById('qrcode');
+  if (!container || typeof QRCode === 'undefined') return;
+  
+  const nonce = Math.random().toString(36).slice(2, 10);
+  const qrText = `ITRUM_CHECKIN:${user.id}:${Date.now()}:${nonce}:${user.group}`;
   container.innerHTML = '';
   new QRCode(container, {
     text: qrText,
@@ -37,58 +37,63 @@ function generateRoomQR(user) {
   qrSeconds = 60;
 }
 
-// Инициализация страницы
 function initRoomProfile() {
+  renderMyBookings();
+
   const user = getCurrentStudent();
+  if (!user) return;
 
-  // Если студент не вошел в IT.Шабур — отправляем на страницу логина IT.Шабур
-  if (!user) {
-    alert('Сначала выполните вход через Электронный студенческий (IT.Шабур)');
-    window.location.href = 'IT.Шабур/login.html';
-    return;
-  }
+  const nameEl = document.getElementById('studentName');
+  if (nameEl) nameEl.textContent = user.name;
+  
+  const groupEl = document.getElementById('studentGroup');
+  if (groupEl) groupEl.textContent = `Группа: ${user.group || 'Не указана'}`;
+  
+  const specEl = document.getElementById('studentSpecialty');
+  if (specEl) specEl.textContent = `Специальность: ${user.specialty || 'Не указана'}`;
+  
+  const statusEl = document.getElementById('studentStatus');
+  if (statusEl) statusEl.textContent = user.status === 'active' ? 'Статус: Активен' : 'Статус: Неактивен';
 
-  // Заполняем данные профиля из IT.Шабур
-  document.getElementById('studentName').textContent = user.name;
-  document.getElementById('studentGroup').textContent = `Группа: ${user.group || 'Не указана'}`;
-  document.getElementById('studentSpecialty').textContent = `Специальность: ${user.specialty || 'Не указана'}`;
-  document.getElementById('studentStatus').textContent = user.status === 'active' ? 'Статус: Активен' : 'Статус: Неактивен';
-
-  // Аватар или инициалы
   const avatarEl = document.getElementById('avatar');
-  if (user.avatar) {
-    avatarEl.innerHTML = `<img src="${user.avatar}" alt="">`;
-  } else {
-    avatarEl.textContent = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  if (avatarEl) {
+    if (user.avatar) {
+      avatarEl.innerHTML = `<img src="${user.avatar}" alt="">`;
+    } else {
+      avatarEl.textContent = user.name.split(' ').map(w => w).join('').slice(0, 2).toUpperCase();
+    }
   }
 
-  // Стеки технологий
   const stacksEl = document.getElementById('studentStacks');
-  stacksEl.innerHTML = (user.stacks && user.stacks.length)
-    ? user.stacks.map(s => `<span class="stack-tag">${s}</span>`).join('')
-    : '<span style="color:var(--text-muted); font-size:0.85rem;">Стеки не указаны</span>';
+  if (stacksEl) {
+    stacksEl.innerHTML = (user.stacks && user.stacks.length)
+      ? user.stacks.map(s => `<span class="stack-tag">${s}</span>`).join('')
+      : '<span style="color:var(--text-muted); font-size:0.85rem;">Стеки не указаны</span>';
+  }
 
-  // Отрисовка шабурят и истории
   renderBonuses(user);
 
-  // Генерация QR и запуск таймера
-  generateRoomQR(user);
-  setInterval(() => {
-    qrSeconds--;
-    document.getElementById('qrTimer').textContent = `Обновление через: ${qrSeconds} сек`;
-    if (qrSeconds <= 0) generateRoomQR(user);
-  }, 1000);
-
-  // Загрузка броней студента
-  renderMyBookings(user.id);
+  try {
+    generateRoomQR(user);
+    setInterval(() => {
+      qrSeconds--;
+      const timerEl = document.getElementById('qrTimer');
+      if (timerEl) timerEl.textContent = `Обновление через: ${qrSeconds} сек`;
+      if (qrSeconds <= 0) generateRoomQR(user);
+    }, 1000);
+  } catch (e) {
+    console.warn('QR не загружен:', e);
+  }
 }
 
-// Отрисовка баланса и истории из IT.Шабур
 function renderBonuses(user) {
-  document.getElementById('bonusAmount').textContent = user.bonuses || 0;
+  const amountEl = document.getElementById('bonusAmount');
+  if (amountEl) amountEl.textContent = user.bonuses || 0;
+  
   const hist = document.getElementById('history');
+  if (!hist) return;
+  
   const list = (user.bonusHistory || []).slice().reverse();
-
   if (!list.length) {
     hist.innerHTML = '<div class="history-item">Операций пока нет</div>';
     return;
@@ -106,14 +111,13 @@ function renderBonuses(user) {
   }).join('');
 }
 
-// Универсальная функция начисления/списания шабурят в общую БД
 function addShaburTransaction(amount, reason) {
   const currentUser = getCurrentStudent();
   if (!currentUser) return false;
 
   const db = getShaburDB();
   const idx = db.users.findIndex(u => u.id === currentUser.id);
-  
+
   if ((db.users[idx].bonuses || 0) + amount < 0) {
     alert('Недостаточно шабурят на балансе!');
     return false;
@@ -132,48 +136,49 @@ function addShaburTransaction(amount, reason) {
   return true;
 }
 
-// Демо-кнопки интеграции баллов
 function checkInDemo() {
-  if (addShaburTransaction(10, 'IT.ROOM — Check-in в забронированной аудитории')) {
+  if (addShaburTransaction(10, 'IT.Рум — Check-in в забронированной аудитории')) {
     alert('+10 шабурят зачислено на ваш общий счёт!');
   }
 }
 
 function buyVipPass() {
-  if (addShaburTransaction(-50, 'IT.ROOM — Приоритетное бронирование на 7 дней')) {
+  if (addShaburTransaction(-50, 'IT.Рум — Приоритетное бронирование на 7 дней')) {
     alert('VIP-доступ активирован! Списано 50 шабурят.');
   }
 }
 
-// Работа с бронями кабинетов
-function getBookings() {
-  const raw = localStorage.getItem(ROOMS_DB_KEY);
-  if (!raw) {
-    // Тестовая бронь для студента st001 (Маслов Максим)
-    const demo = [
-      { id: 101, userId: 'st001', room: '304А', date: '2026-11-25', time: '16:00 – 18:00', purpose: 'Подготовка к хакатону' }
-    ];
-    localStorage.setItem(ROOMS_DB_KEY, JSON.stringify(demo));
-    return demo;
-  }
-  return JSON.parse(raw);
+function getItRoomBookings() {
+  const raw = localStorage.getItem(IT_ROOM_BOOKINGS_KEY);
+  return raw ? JSON.parse(raw) : [];
 }
 
-function renderMyBookings(userId) {
-  const container = document.getElementById('myBookingsList');
-  const myBookings = getBookings().filter(b => b.userId === userId);
+function formatDateRu(isoDate) {
+  if (!isoDate || !isoDate.includes('-')) return isoDate;
+  const [y, m, d] = isoDate.split('-');
+  return `${d}.${m}.${y}`;
+}
 
-  if (!myBookings.length) {
-    container.innerHTML = '<p style="color:var(--text-muted); margin-top:12px;">У вас пока нет активных броней.</p>';
+function renderMyBookings() {
+  const container = document.getElementById('myBookingsList');
+  if (!container) return;
+
+  const bookings = getItRoomBookings();
+
+  if (!bookings.length) {
+    container.innerHTML = `
+      <div style="margin-top: 14px; padding: 16px; background: #0f0f1e; border-radius: 12px; border: 1px dashed var(--card-border); color: var(--text-muted); font-size: 0.9rem;">
+        У вас пока нет активных броней. <a href="index.html" style="color: var(--accent-green); text-decoration: none; font-weight: 600;">Выбрать кабинку на карте →</a>
+      </div>`;
     return;
   }
 
-  container.innerHTML = myBookings.map(b => `
+  container.innerHTML = bookings.map(b => `
     <div class="booking-item">
       <div>
-        <div style="font-weight: 600; color: var(--accent-green);">Аудитория ${b.room}</div>
-        <div style="font-size: 0.9rem;">${b.date} • <strong>${b.time}</strong></div>
-        <div style="font-size: 0.85rem; color: var(--text-muted);">Цель: ${b.purpose}</div>
+        <div style="font-weight: 700; color: var(--accent-green); font-size: 1rem;">${b.roomName} (${b.floor} этаж)</div>
+        <div style="font-size: 0.9rem; margin-top: 3px;">${formatDateRu(b.date)} • <strong>${b.time}</strong></div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 3px;">Цель: ${b.purpose}</div>
       </div>
       <button class="btn small danger" onclick="cancelRoomBooking(${b.id})">Отменить</button>
     </div>
@@ -182,12 +187,37 @@ function renderMyBookings(userId) {
 
 function cancelRoomBooking(bookingId) {
   if (!confirm('Отменить бронь аудитории?')) return;
-  const all = getBookings().filter(b => b.id !== bookingId);
-  localStorage.setItem(ROOMS_DB_KEY, JSON.stringify(all));
-  
-  // Бонус за сознательную отмену заранее
-  addShaburTransaction(5, 'IT.ROOM — Своевременная отмена брони');
-  renderMyBookings(getCurrentStudent().id);
+
+  let bookings = getItRoomBookings();
+  const index = bookings.findIndex(b => b.id === bookingId);
+  if (index === -1) return;
+
+  const removed = bookings[index];
+  const rawRooms = localStorage.getItem(IT_ROOM_ROOMS_KEY);
+
+  if (rawRooms) {
+    const roomsDb = JSON.parse(rawRooms);
+    const room = roomsDb[removed.floor]?.find(r => r.id === removed.roomId);
+
+    if (room) {
+      const [bookStart, bookEnd] = removed.time.split('–').map(t => t.trim());
+      const slotsToFree = removed.bookedSlots || [removed.time];
+
+      room.slots.forEach(slot => {
+        const [slotStart, slotEnd] = slot.time.split('–').map(t => t.trim());
+        if (slotsToFree.includes(slot.time) || (slotStart >= bookStart && slotEnd <= bookEnd)) {
+          slot.status = 'free';
+          slot.label = 'Свободно';
+        }
+      });
+      localStorage.setItem(IT_ROOM_ROOMS_KEY, JSON.stringify(roomsDb));
+    }
+  }
+
+  bookings.splice(index, 1);
+  localStorage.setItem(IT_ROOM_BOOKINGS_KEY, JSON.stringify(bookings));
+
+  renderMyBookings();
 }
 
 function logoutFromShabur() {
@@ -195,4 +225,4 @@ function logoutFromShabur() {
   window.location.href = 'IT.Шабур/login.html';
 }
 
-initRoomProfile();
+document.addEventListener('DOMContentLoaded', initRoomProfile);

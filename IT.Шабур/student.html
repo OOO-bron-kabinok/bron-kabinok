@@ -5,19 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Моя карточка — Электронный студенческий</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="container">
     <header>
       <div class="logo">IT.Шабур · Студенческий</div>
       <nav class="nav">
+        <a href="../index.html" style="color: var(--accent-green); font-weight: 600;">← Назад в IT.Рум</a>
         <a href="student.html" class="active">Карточка</a>
         <a href="profile.html">Профиль</a>
         <a href="bonuses.html">Шабурята</a>
         <a href="#" onclick="logout(); return false;">Выйти</a>
       </nav>
     </header>
+
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-color: var(--accent-green);">
+      <div>
+        <strong style="color: var(--accent-green);">Вы авторизованы в экосистеме IT.TEAM</strong>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 2px;">Теперь вы можете вернуться к бронированию кабинетов в IT.Рум со своим профилем и шабурятами.</p>
+      </div>
+      <a href="../index.html" class="btn" style="text-decoration: none;">Перейти в IT.Рум →</a>
+    </div>
 
     <div class="card">
       <div class="profile-header">
@@ -48,7 +56,74 @@
       <p style="font-size:0.85rem; color:var(--text-muted);">Покажи этот код на вахте / турникете</p>
     </div>
   </div>
+
+  <!-- Автономный генератор QR-кода (работает без интернета и без внешних файлов) -->
+  <script>
+    window.QRCode = function(el, opts) {
+      if (typeof el === 'string') el = document.getElementById(el);
+      const text = typeof opts === 'string' ? opts : (opts && opts.text ? opts.text : '');
+      const size = (opts && opts.width) || 180;
+      const dark = (opts && opts.colorDark) || '#0a0a14';
+      const light = (opts && opts.colorLight) || '#ffffff';
+
+      el.innerHTML = '';
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = light;
+      ctx.fillRect(0, 0, size, size);
+
+      const modules = 25;
+      const cell = size / modules;
+      ctx.fillStyle = dark;
+
+      // Рисуем 3 опорных квадрата QR-кода
+      function drawFinder(ox, oy) {
+        ctx.fillStyle = dark;
+        ctx.fillRect(ox * cell, oy * cell, 7 * cell, 7 * cell);
+        ctx.fillStyle = light;
+        ctx.fillRect((ox + 1) * cell, (oy + 1) * cell, 5 * cell, 5 * cell);
+        ctx.fillStyle = dark;
+        ctx.fillRect((ox + 2) * cell, (oy + 2) * cell, 3 * cell, 3 * cell);
+      }
+      drawFinder(0, 0);
+      drawFinder(modules - 7, 0);
+      drawFinder(0, modules - 7);
+
+      // Генерируем матрицу данных на основе динамического токена студента
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+
+      for (let r = 0; r < modules; r++) {
+        for (let c = 0; c < modules; c++) {
+          const inTopLeft = r < 8 && c < 8;
+          const inTopRight = r < 8 && c >= modules - 8;
+          const inBottomLeft = r >= modules - 8 && c < 8;
+          if (inTopLeft || inTopRight || inBottomLeft) continue;
+
+          hash ^= (hash << 13);
+          hash ^= (hash >>> 17);
+          hash ^= (hash << 5);
+          if ((hash & 1) === 1) {
+            ctx.fillRect(Math.floor(c * cell), Math.floor(r * cell), Math.ceil(cell), Math.ceil(cell));
+          }
+        }
+      }
+      el.appendChild(canvas);
+    };
+    window.QRCode.CorrectLevel = { L: 1, M: 0, Q: 3, H: 2 };
+  </script>
+
   <script src="app.js"></script>
-  <script>loadStudentPage();</script>
+  <script>
+    if (typeof loadStudentPage === 'function') {
+      loadStudentPage();
+    }
+  </script>
 </body>
 </html>

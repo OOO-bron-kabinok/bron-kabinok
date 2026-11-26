@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бронь Кабинки — IT.TEAM / IT.МОСКВА</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>IT.Рум — Бронь Кабинки | IT.МОСКВА</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+    
 </head>
 <body>
 
 <header class="header">
     <div class="header-inner">
         <div class="brand">
-            <div class="brand-badge">IT.ROOM</div>
+            <div class="brand-badge">IT.Рум</div>
             <div class="brand-info">
                 <h1>Бронь Кабинки</h1>
                 <p>Колледж IT.МОСКВА</p>
@@ -28,7 +30,7 @@
             <button class="nav-btn" id="nav-bookings" onclick="switchView('bookings')">
                 Мои брони <span class="counter-badge hidden" id="bookings-counter">0</span>
             </button>
-            <a href="profile.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center;">
+            <a href="cabinet.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center;">
                 Личный кабинет
             </a>
             <a href="IT.Шабур/index.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center;">
@@ -60,11 +62,6 @@
 
         <div class="floor-map">
             <div class="rooms-grid" id="rooms-north"></div>
-            <div class="corridor">
-                <span>← Лестница / Лифт</span>
-                <span>Главный коридор • IT.МОСКВА</span>
-                <span>Рекреация →</span>
-            </div>
             <div class="rooms-grid" id="rooms-south"></div>
         </div>
     </section>
