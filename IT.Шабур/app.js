@@ -44,7 +44,7 @@ function saveDB(db) {
 }
 
 function getCurrentUser() {
-  const id = sessionStorage.getItem('currentUserId');
+  const id = localStorage.getItem('currentUserId');
   if (!id) return null;
   const db = getDB();
   return db.users.find(u => u.id === id) || null;
@@ -65,7 +65,7 @@ function requireAuth(role = null) {
 }
 
 function logout() {
-  sessionStorage.removeItem('currentUserId');
+  localStorage.removeItem('currentUserId');
   window.location.href = 'login.html';
 }
 
@@ -80,7 +80,7 @@ function doLogin() {
     err.textContent = 'Неверный логин или пароль';
     return;
   }
-  sessionStorage.setItem('currentUserId', user.id);
+  localStorage.setItem('currentUserId', user.id);
   if (user.role === 'admin') {
     window.location.href = 'admin.html';
   } else {

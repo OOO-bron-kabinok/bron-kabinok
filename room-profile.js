@@ -1,4 +1,5 @@
 const DB_KEY = 'studentAppDB';
+const SESSION_KEY = 'currentUserId';
 const IT_ROOM_BOOKINGS_KEY = 'it_moscow_bookings';
 const IT_ROOM_ROOMS_KEY = 'it_moscow_rooms';
 
@@ -12,36 +13,29 @@ function saveShaburDB(db) {
 }
 
 function getCurrentStudent() {
-  const userId = sessionStorage.getItem('currentUserId');
+  const sessionUser = sessionStorage.getItem(SESSION_KEY);
+  if (sessionUser) {
+    localStorage.setItem(SESSION_KEY, sessionUser);
+  }
+
+  const userId = localStorage.getItem(SESSION_KEY);
   const db = getShaburDB();
   if (!db || !userId) return null;
   return db.users.find(u => u.id === userId) || null;
 }
 
-let qrSeconds = 60;
-function generateRoomQR(user) {
-  const container = document.getElementById('qrcode');
-  if (!container || typeof QRCode === 'undefined') return;
-  
-  const nonce = Math.random().toString(36).slice(2, 10);
-  const qrText = `ITRUM_CHECKIN:${user.id}:${Date.now()}:${nonce}:${user.group}`;
-  container.innerHTML = '';
-  new QRCode(container, {
-    text: qrText,
-    width: 130,
-    height: 130,
-    colorDark: '#0a0a14',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M
-  });
-  qrSeconds = 60;
+if (!getCurrentStudent()) {
+  window.location.replace('IT.Шабур/login.html');
 }
 
 function initRoomProfile() {
-  renderMyBookings();
-
   const user = getCurrentStudent();
-  if (!user) return;
+  if (!user) {
+    window.location.replace('IT.Шабур/login.html');
+    return;
+  }
+
+  renderMyBookings();
 
   const nameEl = document.getElementById('studentName');
   if (nameEl) nameEl.textContent = user.name;
@@ -72,18 +66,6 @@ function initRoomProfile() {
   }
 
   renderBonuses(user);
-
-  try {
-    generateRoomQR(user);
-    setInterval(() => {
-      qrSeconds--;
-      const timerEl = document.getElementById('qrTimer');
-      if (timerEl) timerEl.textContent = `Обновление через: ${qrSeconds} сек`;
-      if (qrSeconds <= 0) generateRoomQR(user);
-    }, 1000);
-  } catch (e) {
-    console.warn('QR не загружен:', e);
-  }
 }
 
 function renderBonuses(user) {
@@ -221,8 +203,9 @@ function cancelRoomBooking(bookingId) {
 }
 
 function logoutFromShabur() {
-  sessionStorage.removeItem('currentUserId');
-  window.location.href = 'IT.Шабур/login.html';
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  window.location.replace('IT.Шабур/login.html');
 }
 
 document.addEventListener('DOMContentLoaded', initRoomProfile);

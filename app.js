@@ -3,6 +3,17 @@ let selectedRoom = null;
 let selectedSlotIndices = [];
 let reportTargetBooking = null;
 
+// Получение ID текущего авторизованного студента из IT.Шабур
+function getActiveUserId() {
+    return localStorage.getItem('currentUserId') || 'guest';
+}
+
+// Получение броней только текущего студента
+function getCurrentUserBookings() {
+    const uid = getActiveUserId();
+    return userBookings.filter(b => !b.userId || b.userId === uid);
+}
+
 // Вспомогательная функция получения локальной даты в формате YYYY-MM-DD
 function getLocalDateStr(dateObj = new Date()) {
     const y = dateObj.getFullYear();
@@ -36,7 +47,7 @@ function isSlotPassed(slotTime, selectedDateStr) {
     return now >= slotEnd;
 }
 
-// Проверка, занят ли конкретный слот на выбранную дату пользователем
+// Проверка, занят ли конкретный слот на выбранную дату (любым студентом)
 function getBookingForSlot(roomId, dateStr, slotTime) {
     return userBookings.find(b => {
         if (b.roomId !== roomId || b.date !== dateStr) return false;
@@ -87,7 +98,8 @@ function renderBookedDatesBar() {
         controlsLeft.appendChild(strip);
     }
 
-    const bookedDatesSet = new Set(userBookings.map(b => b.date));
+    const myBookings = getCurrentUserBookings();
+    const bookedDatesSet = new Set(myBookings.map(b => b.date));
     const daysHtml = [];
     const weekDays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
@@ -109,7 +121,7 @@ function renderBookedDatesBar() {
             <button type="button"
                 class="day-chip ${isSelected ? 'active' : ''} ${hasBooking ? 'has-booking' : ''}"
                 onclick="selectCalendarDate('${dStr}')"
-                title="${hasBooking ? 'На эту дату есть бронь' : 'Рабочий день'}">
+                title="${hasBooking ? 'На эту дату у вас есть бронь' : 'Рабочий день'}">
                 ${label}
                 ${hasBooking ? '<span class="booking-dot"></span>' : ''}
             </button>
@@ -143,7 +155,7 @@ function switchView(view) {
     document.getElementById('view-map').classList.toggle('hidden', view !== 'map');
     document.getElementById('view-bookings').classList.toggle('hidden', view !== 'bookings');
     document.getElementById('nav-map').classList.toggle('active', view === 'map');
-    document.getElementById('nav-bookings').classList.toggle('active', view !== 'bookings');
+    document.getElementById('nav-bookings').classList.toggle('active', view === 'bookings');
 
     if (view === 'bookings') {
         renderBookingsList();
@@ -164,20 +176,20 @@ function getRoomStatus(room, dateStr) {
     if (isWeekendDate(dateStr)) return 'busy';
 
     let hasAvailableSlot = false;
-    let hasUserBooking = false;
+    let hasBooking = false;
 
     for (const slot of room.slots) {
         const passed = isSlotPassed(slot.time, dateStr);
-        const bookedByUser = getBookingForSlot(room.id, dateStr, slot.time);
+        const bookedSlot = getBookingForSlot(room.id, dateStr, slot.time);
 
-        if (bookedByUser || slot.status === 'booked') {
-            hasUserBooking = true;
+        if (bookedSlot || slot.status === 'booked') {
+            hasBooking = true;
         } else if (!passed && slot.status === 'free') {
             hasAvailableSlot = true;
         }
     }
 
-    if (hasUserBooking && !hasAvailableSlot) return 'booked';
+    if (hasBooking && !hasAvailableSlot) return 'booked';
     if (hasAvailableSlot) return 'free';
     return 'busy';
 }
@@ -244,6 +256,7 @@ function openRoomModal(room) {
 function renderModalSlots() {
     const container = document.getElementById('modal-slots');
     const selectedDate = document.getElementById('booking-date').value;
+    const uid = getActiveUserId();
     container.innerHTML = '';
 
     selectedRoom.slots.forEach((slot, index) => {
@@ -254,8 +267,11 @@ function renderModalSlots() {
         let effectiveLabel = slot.label;
 
         if (existingBooking) {
+            const isMine = !existingBooking.userId || existingBooking.userId === uid;
             effectiveStatus = 'booked';
-            effectiveLabel = `Ваша бронь (${existingBooking.purpose})`;
+            effectiveLabel = isMine
+                ? `Ваша бронь (${existingBooking.purpose})`
+                : 'Забронировано другим студентом';
         } else if (passed) {
             effectiveStatus = 'occupied';
             effectiveLabel = 'Время прошло';
@@ -286,6 +302,16 @@ function submitBooking() {
     const errorEl = document.getElementById('modal-error');
     const purpose = document.getElementById('purpose-input').value.trim();
     const selectedDate = document.getElementById('booking-date').value;
+    const myBookings = getCurrentUserBookings();
+
+    // Проверка: один человек может забронировать не более 1 кабинки на одну дату
+    const alreadyBookedToday = myBookings.find(b => b.date === selectedDate);
+    if (alreadyBookedToday) {
+        const formattedDate = selectedDate.split('-').reverse().join('.');
+        errorEl.textContent = `На ${formattedDate} у вас уже есть бронь (${alreadyBookedToday.roomName}). Можно бронировать не более 1 кабинки в день.`;
+        errorEl.classList.add('visible');
+        return;
+    }
 
     if (selectedSlotIndices.length === 0) {
         errorEl.textContent = 'Выберите хотя бы одно свободное временное окно.';
@@ -317,6 +343,7 @@ function submitBooking() {
 
     userBookings.push({
         id: Date.now(),
+        userId: getActiveUserId(),
         roomId: selectedRoom.id,
         roomName: selectedRoom.name,
         floor: currentFloor,
@@ -344,20 +371,22 @@ function handleBackdropClick(e) {
 function updateBookingsCounter() {
     const badge = document.getElementById('bookings-counter');
     if (!badge) return;
-    badge.textContent = userBookings.length;
-    badge.classList.toggle('hidden', userBookings.length === 0);
+    const myBookings = getCurrentUserBookings();
+    badge.textContent = myBookings.length;
+    badge.classList.toggle('hidden', myBookings.length === 0);
 }
 
 function renderBookingsList() {
     const list = document.getElementById('bookings-list');
     list.innerHTML = '';
+    const myBookings = getCurrentUserBookings();
 
-    if (userBookings.length === 0) {
+    if (myBookings.length === 0) {
         list.innerHTML = '<p style="color: var(--text-muted);">У вас пока нет активных броней.</p>';
         return;
     }
 
-    userBookings.forEach(b => {
+    myBookings.forEach(b => {
         const card = document.createElement('div');
         card.className = 'booking-card';
         card.innerHTML = `
@@ -453,16 +482,19 @@ function submitReport() {
 
     saveReports();
     closeReportModal();
-    showToast('Заявка отправлена', 'Спасибо! Мы передали информацию в хозслужбу.');
+    alert('Ваша жалоба была отправлена админу (демо)');
+    showToast('Заявка отправлена', 'Ваша жалоба была отправлена админу (демо)');
 }
 
+
 function simulatePush() {
-    if (userBookings.length === 0) {
+    const myBookings = getCurrentUserBookings();
+    if (myBookings.length === 0) {
         showToast('Нет активных броней', 'Сначала забронируйте кабинку на плане этажа.');
         return;
     }
 
-    const first = userBookings[0];
+    const first = myBookings[0];
     showToast('Напоминание (за 30 мин)', `Скоро ваша бронь: ${first.roomName} в ${first.time}`);
 }
 

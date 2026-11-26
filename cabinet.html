@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IT.Рум — Личный кабинет</title>
   <link rel="stylesheet" href="IT.Шабур/styles.css">
-  <link rel="icon" type="image/png" href="logo.png">
-  <script src="https://cloudflare.com"></script>
   <style>
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .booking-item {
@@ -22,7 +20,7 @@
     <header>
       <div class="logo">IT.Рум <span style="font-size:0.85rem; color:var(--text-muted); font-weight:400;">× IT.Шабур</span></div>
       <nav class="nav">
-        <a href="index.html">Карта кабинетов</a>
+        <a href="index.html">Карта кабинок</a>
         <a href="cabinet.html" class="active">Личный кабинет</a>
         <a href="IT.Шабур/student.html">Открыть IT.Шабур ↗</a>
         <a href="#" onclick="logoutFromShabur(); return false;" style="color: var(--danger);">Выйти</a>
@@ -39,10 +37,6 @@
           <p id="studentSpecialty" style="color: var(--text-muted); font-size: 0.9rem;">Специальность: —</p>
           <span class="status-badge" id="studentStatus">Статус: Активен</span>
           <div class="stacks" id="studentStacks"></div>
-        </div>
-        <div class="qr-box">
-          <div class="qr-container" id="qrcode" style="margin: 0; padding: 10px;"></div>
-          <div id="qrTimer" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Обновление через: 60 сек</div>
         </div>
       </div>
     </div>
@@ -72,7 +66,7 @@
       <div class="card">
         <h3>Мои брони аудиторий</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">
-          За 30 минут до начала придёт уведомление. Не забудьте отсканировать QR на входе.
+          За 30 минут до начала придёт уведомление.
         </p>
         <div id="myBookingsList"></div>
       </div>
