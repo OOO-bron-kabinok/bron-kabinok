@@ -42,7 +42,7 @@
 
 | Главный экран (План этажа) | Расписание кабинета | Экран «Мои брони» |
 | :---: | :---: | :---: |
-| ![Главный экран](ссылка_на_скриншот_1) | ![Расписание](ссылка_на_скриншот_2) | ![Мои брони](ссылка_на_скриншот_3) |
+| ![Главный экран](https://docs.google.com/document/d/1pZKLwd9H6p2oUsRrJG9mElJSSQky4BfFjBRVZoQtIyU/edit?tab=t.0) | ![Личный кабинет](https://docs.google.com/document/d/1jVXfQp6N-XTSmCoQUoyYAWqSGqBn3-Ghg_FhmlCoWpk/edit?tab=t.0) | ![Мои брони](https://docs.google.com/document/d/1Nf9APqmiwYEFLy_MKxaFTdVCJSuj6b8eUyLkiJqxweU/edit?tab=t.0) |
 
 ---
 
